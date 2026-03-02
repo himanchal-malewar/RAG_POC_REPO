@@ -150,17 +150,6 @@ Metrics reported:
 
 ------------------------------------------------------------------------
 
-# 🏗️ Future Improvements
-
--   Replace brute-force similarity with FAISS index
--   Add citation highlighting
--   Add structured tool calling
--   Add streaming responses
--   Add vector caching
--   Add re-ranking layer
-
-------------------------------------------------------------------------
-
 # 📌 Summary
 
 This project demonstrates a complete **Agentic RAG pipeline with
