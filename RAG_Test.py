@@ -20,7 +20,6 @@ EMBED_MODEL = "openai/text-embedding-3-small"
 CHAT_MODEL = "openai/gpt-4o-mini"
 TOKEN = os.getenv("GITHUB_TOKEN")
 
-print(TOKEN)
 
 if not TOKEN:
     raise ValueError("GITHUB_TOKEN not found")
