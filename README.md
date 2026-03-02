@@ -12,32 +12,6 @@ This project implements an **Agentic Retrieval-Augmented Generation
 
 ------------------------------------------------------------------------
 
-# 🧭 System Flow Diagram
-
-``` mermaid
-flowchart TD
-
-A[Start] --> B[Load Document]
-B --> C[Chunk Text]
-C --> D[Generate Embeddings for Chunks]
-D --> E[Store Vectors]
-
-E --> F[User Question]
-F --> G[Embed Question]
-G --> H[Retrieve Top-K Chunks]
-H --> I[Planner Module]
-I --> J[Generator Module]
-J --> K[Reflector Module]
-
-K -->|YES| L[Return Answer]
-K -->|NO (Retry)| H
-
-L --> M[Evaluation Metrics]
-M --> N[End]
-```
-
-------------------------------------------------------------------------
-
 # 📂 Project Structure
 
     RAG_CODE/
