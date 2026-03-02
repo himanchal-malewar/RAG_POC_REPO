@@ -1,9 +1,47 @@
-# Agentic RAG Evaluation System
+# 🧠 Agentic RAG Evaluation System
 
-------------------------------------------------------------------------
+An end-to-end **Agentic Retrieval-Augmented Generation (RAG) Evaluation Framework** designed to:
 
-# 🏗️ High-Level Architecture Diagram
+- Ingest documents
+- Generate embeddings
+- Retrieve relevant context
+- Run an agent loop (Planner → Generator → Reflector)
+- Evaluate system performance with multiple metrics
 
+---
+
+## 📌 Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [System Components](#system-components)
+- [Evaluation Metrics](#evaluation-metrics)
+- [Models Used](#models-used)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Future Improvements](#future-improvements)
+- [License](#license)
+
+---
+
+## 📖 Overview
+
+This project implements an **Agent-based RAG system** with a built-in evaluation engine.
+
+It supports:
+
+- Multi-format document ingestion (PDF, TXT, DOCX, CSV)
+- Chunking and embedding generation
+- Cosine similarity retrieval
+- Iterative agent loop with grounding validation
+- Automatic evaluation against a golden dataset
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
 flowchart LR
 
 subgraph Data_Ingestion
@@ -57,5 +95,3 @@ subgraph Evaluation_Engine
     D4 --> G6
     G1 --> G2
 end
-
-------------------------------------------------------------------------
