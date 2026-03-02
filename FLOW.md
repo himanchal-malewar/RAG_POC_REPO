@@ -4,7 +4,6 @@
 
 # 🏗️ High-Level Architecture Diagram
 
-``` mermaid
 flowchart LR
 
 subgraph Data_Ingestion
@@ -21,8 +20,7 @@ subgraph Preprocessing
 end
 
 subgraph Embedding_Layer
-    C1[Embedding Model
-text-embedding-3-small]
+    C1[Embedding Model<br/>text-embedding-3-small]
     C2[Vector Store (In-Memory)]
     B2 --> C1 --> C2
 end
@@ -38,8 +36,7 @@ end
 
 subgraph Agent_Loop
     E1[Planner]
-    E2[Generator
-(gpt-4o-mini)]
+    E2[Generator<br/>(gpt-4o-mini)]
     E3[Reflector]
     D4 --> E1 --> E2 --> E3
     E3 -->|Grounded YES| F1[Final Answer]
@@ -60,6 +57,5 @@ subgraph Evaluation_Engine
     D4 --> G6
     G1 --> G2
 end
-```
 
 ------------------------------------------------------------------------
