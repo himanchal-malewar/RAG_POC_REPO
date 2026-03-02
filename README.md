@@ -55,7 +55,6 @@ pip install -r requirements.txt
 ### requirements.txt
 
     numpy==1.26.4
-    pandas==2.2.2
     PyMuPDF==1.24.1
     python-docx==1.1.0
     python-dotenv==1.0.1
