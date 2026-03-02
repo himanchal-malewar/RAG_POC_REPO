@@ -1,10 +1,10 @@
 import os
 import re
 import json
+import csv
 import time
 import numpy as np
 import fitz
-import pandas as pd
 from docx import Document
 from dotenv import load_dotenv
 from azure.ai.inference import EmbeddingsClient, ChatCompletionsClient
@@ -20,6 +20,7 @@ EMBED_MODEL = "openai/text-embedding-3-small"
 CHAT_MODEL = "openai/gpt-4o-mini"
 TOKEN = os.getenv("GITHUB_TOKEN")
 
+print(TOKEN)
 
 if not TOKEN:
     raise ValueError("GITHUB_TOKEN not found")
@@ -51,11 +52,19 @@ def load_document(file_path):
         doc = Document(file_path)
         return "\n".join([p.text for p in doc.paragraphs])
 
+    # elif ext == ".csv":
+    #     df = pd.read_csv(file_path)
+    #     rows = []
+    #     for _, row in df.iterrows():
+    #         rows.append(", ".join([f"{c}: {row[c]}" for c in df.columns]))
+    #     return "\n".join(rows)
+    
     elif ext == ".csv":
-        df = pd.read_csv(file_path)
         rows = []
-        for _, row in df.iterrows():
-            rows.append(", ".join([f"{c}: {row[c]}" for c in df.columns]))
+        with open(file_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rows.append(", ".join(f"{k}: {v}" for k, v in row.items()))
         return "\n".join(rows)
 
     else:
