@@ -1,0 +1,45 @@
+What is agentic AI?
+
+Agentic AI is an artificial intelligence system that can accomplish a specific goal with limited supervision. It consists of AI agents—machine learning models that mimic human decision-making to solve problems in real time. In a multiagent system, each agent performs a specific subtask required to reach the goal and their efforts are coordinated through AI orchestration.
+
+Unlike traditional AI models, which operate within predefined constraints and require human intervention, agentic AI exhibits autonomy, goal-driven behavior and adaptability. The term “agentic” refers to these models’ agency, or, their capacity to act independently and purposefully.
+
+Agentic AI builds on generative AI (gen AI) techniques by using large language models (LLMs) to function in dynamic environments. While generative models focus on creating content based on learned patterns, agentic AI extends this capability by applying generative outputs toward specific goals. A generative AI model like OpenAI’s ChatGPT might produce text, images or code, but an agentic AI system can use that generated content to complete complex tasks autonomously by calling external tools. Agents can, for example, not only tell you the best time to climb Mt. Everest given your work schedule, it can also book you a flight and a hotel.
+
+What are the advantages of agentic AI?
+Agentic systems have many advantages over their generative predecessors, which are limited by the information contained in the datasets upon which models are trained.
+
+Autonomous
+The most important advancement of agentic systems is that they allow for autonomy to perform tasks without constant human oversight. Agentic systems can maintain long-term goals, manage multistep problem-solving tasks and track progress over time.
+
+Proactive
+Agentic systems provide the flexibility of LLMs, which can generate responses or actions based on nuanced, context-dependent understanding, with the structured, deterministic and reliable features of traditional programming. This approach allows agents to “think” and “do” in a more human-like fashion.
+
+LLMs by themselves can’t directly interact with external tools or databases or set up systems to monitor and collect data in real time, but agents can. Agents can search the web, call application programming interfaces (APIs) and query databases, then use this information to make decisions and take actions.
+
+Specialized
+Agents can specialize in specific tasks. Some agents are simple, performing a single repetitive task reliably. Others can use perception and draw on memory to solve more complex problems. An agentic architecture might consist of a “conductor” model powered by an LLM that oversees tasks and decisions and supervises other, simpler agents. Such architectures are ideal for sequential workflows but are vulnerable to bottlenecks. Other architectures are more horizontal, with agents working in harmony as equals in a decentralized fashion, but this architecture can be slower than a vertical hierarchy. Different AI applications demand different architectures.
+
+Adaptable
+Agents can learn from their experiences, take in feedback and adjust their behavior. With the right guardrails, agentic systems can improve continuously. Multiagent systems possess the scalability to eventually handle broadly scoped initiatives.
+
+Intuitive
+Because agentic systems are powered by LLMs, users can engage with them with natural language prompts. This means that entire software interfaces—think of the many tabs, dropdowns, charts, sliders, pop-ups and other UI elements involved in the SaaS platform of one’s choice—can be replaced by simple language or voice commands. Theoretically, any software user experience can now be reduced to “talking” with an agent, who can fetch the information one needs and take action based on that information. This productivity benefit can barely be overstated, when one considers the time it takes for workers to learn and master new interfaces and tools.
+
+
+Challenges for agentic AI systems
+Agentic AI systems have massive potential for the enterprise. Their autonomy is their primary benefit, but this autonomous nature can bring serious consequences if agentic systems go “off the rails.” The usual AI risks apply, but can be magnified in agentic systems.
+
+Many agentic AI systems use reinforcement learning, which involves maximizing a reward function. If the reward system is poorly designed, the AI might exploit loopholes to achieve “high scores” in unintended ways.
+
+Consider a few examples:
+
+An agent tasked with maximizing social media engagement that prioritizes sensational or misleading content, inadvertently spreading misinformation
+
+A warehouse robot optimizing for speed that damages products to move faster.
+
+A financial trading AI meant to maximize profits that engages in risky or unethical trading practices, triggering market instability.
+
+A content moderation AI designed to reduce harmful speech overcensors legitimate discussions.
+
+Some agentic AI systems can become self-reinforcing, escalating behaviors in an unintended direction. This issue happens when the AI optimizes too aggressively for a particular metric without safeguards. And because agentic systems are often composed of multiple autonomous agents working together, there are opportunities for failure. Traffic jams, bottlenecks, resource conflicts—all of these errors have the potential to cascade. It’s important for models to have clearly-defined goals that can be measured, with feedback loops in place so models can move ever closer to the organization’s intention over time.

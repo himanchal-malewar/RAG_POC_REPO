@@ -1,0 +1,82 @@
+[
+  {
+    "question": "How does the paper define agentic AI?",
+    "expected_answer": "A system with multi-step planning and reasoning capabilities that can autonomously query and select tools within user-defined boundaries to execute a task or achieve an outcome."
+  },
+  {
+    "question": "Why does autonomy in agentic AI exist on a spectrum?",
+    "expected_answer": "Because users can set different levels of independence and control within a system, and risk varies depending on autonomy level, environment, and goal complexity."
+  },
+  {
+    "question": "What are the four main technical components of an agentic AI system?",
+    "expected_answer": "Data, LLM or SLM, system architecture, and tools."
+  },
+  {
+    "question": "Why is data quality critical in agentic AI systems?",
+    "expected_answer": "Because effectiveness and accuracy depend on the quality, representativeness, and reliability of the data used for training and operation."
+  },
+  {
+    "question": "How do LLMs and SLMs differ in their roles within agentic AI systems?",
+    "expected_answer": "LLMs handle broad reasoning and complex orchestration, while SLMs are optimized for focused, domain-specific, repetitive tasks."
+  },
+  {
+    "question": "What is the role of system architecture in agentic AI?",
+    "expected_answer": "It enables orchestration, memory, goal decomposition, and tool usage so the model can function as an agent."
+  },
+  {
+    "question": "Why might accountability be complex in agentic AI systems?",
+    "expected_answer": "Because responsibility depends on autonomy level, deployment context, and interactions among multiple actors in the AI value chain."
+  },
+  {
+    "question": "What is jagged intelligence and why is it risky in agentic workflows?",
+    "expected_answer": "Jagged intelligence refers to uneven capabilities where models excel in some areas but fail in others, which can cause cascading errors in multi-step workflows."
+  },
+  {
+    "question": "How can privacy risks emerge in agentic AI systems?",
+    "expected_answer": "If systems have unrestricted access to data and tools, they may collect, store, or transmit sensitive information without sufficient guardrails."
+  },
+  {
+    "question": "Why does deployment context matter in assessing agentic AI risk?",
+    "expected_answer": "Because the same level of autonomy can pose different risks depending on the environment, such as personal scheduling versus hospital operations."
+  },
+  {
+    "question": "What is automation bias in the context of agentic AI?",
+    "expected_answer": "Excessive user trust in automated systems that can lead to poor decision-making or skill degradation."
+  },
+  {
+    "question": "Why are privacy-enhancing technologies important for agentic AI?",
+    "expected_answer": "They help protect data during storage, processing, and transmission, reducing privacy vulnerabilities."
+  },
+  {
+    "question": "What is the function of an agentic AI system integrator?",
+    "expected_answer": "To assemble the model, architecture, and tools into a cohesive and reliable system."
+  },
+  {
+    "question": "Why does the paper advocate a risk-based policy approach?",
+    "expected_answer": "Because agentic AI systems vary in autonomy and deployment context, requiring proportionate and targeted obligations."
+  },
+  {
+    "question": "How can transparency be tailored in the agentic AI value chain?",
+    "expected_answer": "By providing different levels of information to downstream actors, regulators, and end-users based on their roles and needs."
+  },
+  {
+    "question": "Why are open standards and protocols important for agentic AI?",
+    "expected_answer": "They enable interoperability, cross-industry collaboration, and compatibility across enterprise workflows."
+  },
+  {
+    "question": "How can agentic AI enhance cybersecurity operations?",
+    "expected_answer": "By autonomously handling detection triage and prioritizing alerts, allowing human teams to focus on critical threats."
+  },
+  {
+    "question": "What policy tool is suggested to support experimentation with agentic AI?",
+    "expected_answer": "Regulatory sandboxes that allow controlled testing environments."
+  },
+  {
+    "question": "Why is workforce readiness emphasized in the paper?",
+    "expected_answer": "Because adoption of agentic AI may shift skill demands and requires upskilling and reskilling initiatives."
+  },
+  {
+    "question": "What is value misalignment in agentic AI systems?",
+    "expected_answer": "When the system pursues goals in ways that do not align with user intent or human values due to unclear instructions or narrow optimization."
+  }
+]
