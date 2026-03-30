@@ -3,15 +3,18 @@ import re
 import json
 import csv
 import time
+import pickle
 import numpy as np
 import fitz
 from docx import Document
 from dotenv import load_dotenv
+from tenacity import retry, wait_exponential, stop_after_attempt
+
 from azure.ai.inference import EmbeddingsClient, ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
 
 # =========================
-# CONFIGURATION
+# CONFIG
 # =========================
 load_dotenv()
 
@@ -20,9 +23,8 @@ EMBED_MODEL = "openai/text-embedding-3-small"
 CHAT_MODEL = "openai/gpt-4o-mini"
 TOKEN = os.getenv("GITHUB_TOKEN")
 
-
 if not TOKEN:
-    raise ValueError("GITHUB_TOKEN not found")
+    raise ValueError("Missing GITHUB_TOKEN")
 
 embedding_client = EmbeddingsClient(
     endpoint=ENDPOINT,
@@ -35,29 +37,34 @@ chat_client = ChatCompletionsClient(
 )
 
 # =========================
+# RETRY WRAPPERS
+# =========================
+@retry(wait=wait_exponential(min=1, max=10), stop=stop_after_attempt(3))
+def safe_embed(texts):
+    return embedding_client.embed(input=texts, model=EMBED_MODEL)
+
+@retry(wait=wait_exponential(min=1, max=10), stop=stop_after_attempt(3))
+def safe_chat(messages):
+    return chat_client.complete(model=CHAT_MODEL, messages=messages)
+
+# =========================
 # DOCUMENT LOADER
 # =========================
 def load_document(file_path):
     ext = os.path.splitext(file_path)[1].lower()
 
     if ext == ".pdf":
-        doc = fitz.open(file_path)
-        return "".join([page.get_text() for page in doc])
+        with fitz.open(file_path) as doc:
+            return "".join(page.get_text() for page in doc)
 
     elif ext == ".txt":
-        return open(file_path, "r", encoding="utf-8").read()
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
 
     elif ext == ".docx":
         doc = Document(file_path)
-        return "\n".join([p.text for p in doc.paragraphs])
+        return "\n".join(p.text for p in doc.paragraphs)
 
-    # elif ext == ".csv":
-    #     df = pd.read_csv(file_path)
-    #     rows = []
-    #     for _, row in df.iterrows():
-    #         rows.append(", ".join([f"{c}: {row[c]}" for c in df.columns]))
-    #     return "\n".join(rows)
-    
     elif ext == ".csv":
         rows = []
         with open(file_path, "r", encoding="utf-8") as f:
@@ -67,149 +74,172 @@ def load_document(file_path):
         return "\n".join(rows)
 
     else:
-        raise ValueError("Unsupported file format")
+        raise ValueError("Unsupported format")
 
 # =========================
 # CHUNKING
 # =========================
-def chunk_text(text, chunk_size=800, overlap=200):
-    chunks = []
-    start = 0
-    while start < len(text):
-        chunks.append(text[start:start+chunk_size])
-        start += chunk_size - overlap
+def chunk_text(text, chunk_size=800):
+    sentences = re.split(r'(?<=[.!?]) +', text)
+
+    chunks, current = [], ""
+
+    for s in sentences:
+        s = s.strip()
+        if not s:
+            continue
+
+        if len(current) + len(s) < chunk_size:
+            current += " " + s
+        else:
+            if current.strip():
+                chunks.append(current.strip())
+            current = s
+
+    if current.strip():
+        chunks.append(current.strip())
+
     return chunks
 
 # =========================
-# EMBEDDING
+# EMBEDDING (FIXED)
 # =========================
-def embed_texts(texts):
-    response = embedding_client.embed(
-        input=texts,
-        model=EMBED_MODEL
-    )
-    return [np.array(r.embedding) for r in response.data]
+def embed_texts(texts, batch_size=20):
 
-def cosine_similarity(a, b):
+    cleaned = [
+        str(t).strip()
+        for t in texts
+        if t and str(t).strip()
+    ]
+
+    if not cleaned:
+        raise ValueError("No valid text to embed")
+
+    vectors = []
+
+    for i in range(0, len(cleaned), batch_size):
+        batch = cleaned[i:i + batch_size]
+        res = safe_embed(batch)
+        vectors.extend([np.array(r.embedding) for r in res.data])
+
+    return vectors
+
+def load_or_create_embeddings(chunks, cache_file="embeddings.pkl"):
+
+    if os.path.exists(cache_file):
+        with open(cache_file, "rb") as f:
+            return pickle.load(f)
+
+    vectors = embed_texts(chunks)
+
+    with open(cache_file, "wb") as f:
+        pickle.dump(vectors, f)
+
+    return vectors
+
+def cosine(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 # =========================
 # RETRIEVAL
 # =========================
 def retrieve(question, chunks, vectors, top_k=3):
+
     q_vec = embed_texts([question])[0]
-    scores = [(i, cosine_similarity(q_vec, v)) for i, v in enumerate(vectors)]
+
+    scores = [(i, cosine(q_vec, v)) for i, v in enumerate(vectors)]
     scores.sort(key=lambda x: x[1], reverse=True)
+
     top = scores[:top_k]
-    context = "\n\n".join([chunks[i] for i, _ in top])
+    context = "\n\n".join(chunks[i] for i, _ in top)
+
     return context, top
 
 # =========================
-# PRECISION & RECALL
+# METRICS
 # =========================
 def precision_at_k(question, chunks, top_chunks):
     keywords = question.lower().split()
+
     relevant = sum(
         any(k in chunks[i].lower() for k in keywords)
         for i, _ in top_chunks
     )
+
     return relevant / len(top_chunks)
 
-def recall_at_k(expected_answer, context):
-    return expected_answer.lower() in context.lower()
+def semantic_recall(expected, context):
+    emb = embed_texts([expected, context])
+    return cosine(emb[0], emb[1]) > 0.7
 
-# =========================
-# TOOL MISUSE
-# =========================
-def analytical_question(q):
-    keywords = ["average", "sum", "total", "highest", "lowest",
-                "count", "max", "min", "mean"]
-    return any(k in q.lower() for k in keywords)
+def semantic_score(pred, exp):
+    emb = embed_texts([pred, exp])
+    return cosine(emb[0], emb[1])
 
-def has_numbers(text):
-    return bool(re.search(r"\d+", text))
+def groundedness_score(ans, context):
+    emb = embed_texts([ans, context])
+    return cosine(emb[0], emb[1])
 
 # =========================
 # AGENT MODULES
 # =========================
 def planner(q):
-    return chat_client.complete(
-        model=CHAT_MODEL,
-        messages=[
-            {"role": "system", "content": "Create short reasoning plan."},
-            {"role": "user", "content": q}
-        ]
-    ).choices[0].message.content
+    res = safe_chat([
+        {"role": "system", "content": "Create short reasoning steps."},
+        {"role": "user", "content": q}
+    ])
+    return res.choices[0].message.content
 
-def generator(q, context):
-    return chat_client.complete(
-        model=CHAT_MODEL,
-        messages=[
-            {"role": "system", "content":
-             "Only answer using provided context. "
-             "If not found, say 'I don't know'."},
-            {"role": "user",
-             "content": f"Context:\n{context}\n\nQuestion:\n{q}"}
-        ]
-    ).choices[0].message.content
+def generator(q, context, plan):
+    res = safe_chat([
+        {"role": "system", "content": "Use ONLY context."},
+        {"role": "user",
+         "content": f"Plan:\n{plan}\n\nContext:\n{context}\n\nQ:\n{q}"}
+    ])
+    return res.choices[0].message.content
 
-def reflector(ans):
-    return chat_client.complete(
-        model=CHAT_MODEL,
-        messages=[
-            {"role": "system",
-             "content": "Is this answer grounded in context? YES or NO."},
-            {"role": "user", "content": ans}
-        ]
-    ).choices[0].message.content.strip()
-
-# =========================
-# SEMANTIC SIMILARITY
-# =========================
-def semantic_score(predicted, expected):
-    emb1 = embed_texts([predicted])[0]
-    emb2 = embed_texts([expected])[0]
-    return cosine_similarity(emb1, emb2)
+def reflector(ans, context):
+    res = safe_chat([
+        {"role": "system", "content": "Is answer supported? YES/NO"},
+        {"role": "user",
+         "content": f"Context:\n{context}\n\nAnswer:\n{ans}"}
+    ])
+    return res.choices[0].message.content.strip()
 
 # =========================
 # AGENT LOOP
 # =========================
-def autonomous_agent(q, chunks, vectors, max_loops=3):
+def autonomous_agent(q, chunks, vectors, context=None, top_chunks=None):
 
-    loops = 0
-    misuse = False
-
-    for _ in range(max_loops):
-        loops += 1
+    if context is None:
         context, top_chunks = retrieve(q, chunks, vectors)
 
-        if analytical_question(q) and not has_numbers(context):
-            misuse = True
-            return "Insufficient numeric data.", loops, misuse
+    plan = planner(q)
 
-        ans = generator(q, context)
-        verdict = reflector(ans)
+    for i in range(3):
+        ans = generator(q, context, plan)
 
-        if verdict == "YES":
-            return ans, loops, misuse
+        if reflector(ans, context) == "YES":
+            return ans, i + 1, context, top_chunks
 
-    return ans, loops, misuse
+    return ans, 3, context, top_chunks
 
 # =========================
-# FULL EVALUATION RUNNER
+# EVALUATION
 # =========================
 def evaluate_system(test_file, chunks, vectors):
 
-    test_set = json.load(open(test_file))
+    with open(test_file) as f:
+        test_set = json.load(f)
+
     total = len(test_set)
 
-    retrieval_hits = 0
-    exact_matches = 0
+    recall_hits = 0
+    precision_scores = []
     semantic_scores = []
     hallucinations = 0
-    total_latency = 0
-    total_loops = 0
-    misuse_count = 0
+    latency_total = 0
+    loops_total = 0
 
     for test in test_set:
 
@@ -219,59 +249,56 @@ def evaluate_system(test_file, chunks, vectors):
         start = time.time()
 
         context, top_chunks = retrieve(q, chunks, vectors)
-        if recall_at_k(expected, context):
-            retrieval_hits += 1
 
-        ans, loops, misuse = autonomous_agent(q, chunks, vectors)
+        if semantic_recall(expected, context):
+            recall_hits += 1
 
-        end = time.time()
-        latency = end - start
+        precision_scores.append(
+            precision_at_k(q, chunks, top_chunks)
+        )
 
-        total_latency += latency
-        total_loops += loops
-        if misuse:
-            misuse_count += 1
+        ans, loops, context, _ = autonomous_agent(
+            q, chunks, vectors, context, top_chunks
+        )
 
-        if ans.strip().lower() == expected.strip().lower():
-            exact_matches += 1
+        loops_total += loops
 
-        sem = semantic_score(ans, expected)
-        semantic_scores.append(sem)
+        semantic_scores.append(
+            semantic_score(ans, expected)
+        )
 
-        if expected.lower() not in context.lower() and ans.lower() != "i don't know":
+        if groundedness_score(ans, context) < 0.5:
             hallucinations += 1
 
-    print("\n========== EVALUATION REPORT ==========")
-    print("Retrieval Recall:", retrieval_hits / total)
-    print("Exact Match:", exact_matches / total)
-    print("Avg Semantic Score:", sum(semantic_scores) / total)
-    print("Hallucination Rate:", hallucinations / total)
-    print("Tool Misuse Rate:", misuse_count / total)
-    print("Avg Latency:", total_latency / total)
-    print("Avg Agent Loops:", total_loops / total)
-    print("=======================================\n")
+        latency_total += time.time() - start
 
-# =========================
+    print("\n===== REPORT =====")
+    print("Recall:", recall_hits / total)
+    print("Precision@K:", sum(precision_scores) / total)
+    print("Semantic Score:", sum(semantic_scores) / total)
+    print("Hallucination Rate:", hallucinations / total)
+    print("Avg Latency:", latency_total / total)
+    print("Avg Loops:", loops_total / total)
+    print("==================\n")
+
+# ==========================
 # MAIN
-# =========================
+# ==========================
 if __name__ == "__main__":
 
-    print("📂 Loading document...")
-    file_path = "ITI_AgenticAI_Final.pdf" # supports .pdf, .txt, .docx, .csv
-    golden_test_file = "golden_set.json"
+    file_path = "ITI_AgenticAI_Final.pdf"
+    test_file = "golden_set.json"
 
     text = load_document(file_path)
     chunks = chunk_text(text)
-    vectors = embed_texts(chunks)
+    vectors = load_or_create_embeddings(chunks)
 
-    # Run evaluation
-    evaluate_system(golden_test_file, chunks, vectors)
+    evaluate_system(test_file, chunks, vectors)
 
-    # Interactive mode
     while True:
-        q = input("Ask (exit to quit): ")
+        q = input("Ask your question: ")
         if q.lower() == "exit":
             break
 
-        ans, _, _ = autonomous_agent(q, chunks, vectors)
+        ans, _, _, _ = autonomous_agent(q, chunks, vectors)
         print("\nAnswer:\n", ans)
