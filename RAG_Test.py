@@ -281,9 +281,9 @@ def evaluate_system(test_file, chunks, vectors):
     print("Avg Loops:", loops_total / total)
     print("==================\n")
 
-# ==========================
+# ===========================
 # MAIN
-# ==========================
+# ===========================
 if __name__ == "__main__":
 
     file_path = "ITI_AgenticAI_Final.pdf"
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     evaluate_system(test_file, chunks, vectors)
 
     while True:
-        q = input("Ask your question: ")
+        q = input("Ask your question: (Type exit to quit) ")
         if q.lower() == "exit":
             break
 
