@@ -308,7 +308,7 @@ No valid text to embed
 * chunk size
 * golden dataset quality
 
----
+<!--
 
 ## 🚀 Future Improvements
 
@@ -328,3 +328,4 @@ This project demonstrates:
 * Agentic AI workflow
 * Proper evaluation methodology
 
+-->
